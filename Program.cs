@@ -1,30 +1,37 @@
+﻿using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Register services
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
-//Register own services
+// Register your custom services
 builder.Services.AddScoped<WeatherService>();
 builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<GitHubService>();
 
-
-// Add services to the container.
-
+// Add controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger setup
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "API Aggregator", Version = "v1" });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// ✅ Static files middleware (built-in to ASP.NET Core 7)
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 

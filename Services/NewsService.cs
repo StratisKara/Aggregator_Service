@@ -22,7 +22,16 @@ public class NewsService
 
         var respone = await _httpClient.GetAsync(url);
 
-        respone.EnsureSuccessStatusCode();
+        var response = await _httpClient.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"News API failed: {response.StatusCode} - {errorContent}");
+        }
+
+        response.EnsureSuccessStatusCode();
+
 
         var json = await respone.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
