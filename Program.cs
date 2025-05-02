@@ -8,7 +8,11 @@ builder.Services.AddMemoryCache();
 
 // Register your custom services
 builder.Services.AddScoped<WeatherService>();
-builder.Services.AddScoped<NewsService>();
+//builder.Services.AddScoped<NewsService>();
+builder.Services.AddHttpClient<NewsService>(client =>
+{
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MyApiAggregatorApp/1.0");
+});
 builder.Services.AddScoped<GitHubService>();
 
 // Add controllers
