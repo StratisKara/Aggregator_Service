@@ -59,7 +59,7 @@ namespace ApiAggregatorService.Controllers
 
 
 
-            var result = new
+            var result = new AggregatedData
             {
                 Weather = weather,
                 News = newsArticles.Take(5),
