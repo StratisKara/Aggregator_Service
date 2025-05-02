@@ -1,3 +1,4 @@
+using ApiAggregatorService.Interfaces;
 using ApiAggregatorService.Models;
 using ApiAggregatorService.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,11 @@ namespace ApiAggregatorService.Controllers
     public class AggregationController : ControllerBase
     {
 
-        private readonly WeatherService _weatherService;
-        private readonly NewsService _newsService;
-        private readonly GitHubService _gitHubService;
+        private readonly IWeatherService _weatherService;
+        private readonly INewsService _newsService;
+        private readonly IGitHubService _gitHubService;
 
-        public AggregationController(WeatherService weatherService, NewsService newsService, GitHubService gitHubService)
+        public AggregationController(IWeatherService weatherService, INewsService newsService, IGitHubService gitHubService)
         {
             _weatherService = weatherService;
             _newsService = newsService;

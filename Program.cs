@@ -1,5 +1,7 @@
 ﻿using ApiAggregatorService.Services;
 using Microsoft.OpenApi.Models;
+using ApiAggregatorService.Interfaces;
+using ApiAggregatorService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,13 +10,13 @@ builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
 // Register your custom services
-builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped<IWeatherService, WeatherService>();
 //builder.Services.AddScoped<NewsService>();
-builder.Services.AddHttpClient<NewsService>(client =>
+builder.Services.AddHttpClient<INewsService, NewsService>(client =>
 {
     client.DefaultRequestHeaders.UserAgent.ParseAdd("MyApiAggregatorApp/1.0");
 });
-builder.Services.AddScoped<GitHubService>();
+builder.Services.AddScoped<IGitHubService, GitHubService>();
 
 // Add controllers
 builder.Services.AddControllers();

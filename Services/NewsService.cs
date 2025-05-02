@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ApiAggregatorService.Interfaces;
 
 namespace ApiAggregatorService.Services
 { 
-    public class NewsService
+    public class NewsService : INewsService
     {
         private readonly HttpClient _httpClient;
 
