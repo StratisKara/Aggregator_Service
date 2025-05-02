@@ -1,4 +1,5 @@
 using ApiAggregatorService.Models;
+using ApiAggregatorService.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiAggregatorService.Controllers

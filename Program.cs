@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using ApiAggregatorService.Services;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
