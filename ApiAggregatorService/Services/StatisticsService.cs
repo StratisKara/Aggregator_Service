@@ -8,21 +8,25 @@ namespace ApiAggregatorService.Services
     public class StatisticsService : IStatisticsService
     {
         
-        private readonly ConcurrentDictionary<string, ApiStats> _apiStats;
+        private static readonly ConcurrentDictionary<string, ApiStats> _apiStats = new ConcurrentDictionary<string, ApiStats>();
 
         public StatisticsService()
         {
-            _apiStats = new ConcurrentDictionary<string, ApiStats>();
+            //_apiStats = new ConcurrentDictionary<string, ApiStats>();
         }
 
         public void RecordApiStats(string apiName, long responseTime)
         {
             var stats = _apiStats.GetOrAdd(apiName, new ApiStats());
 
+            Console.WriteLine($"Recording stats for {apiName}: {responseTime}ms");
+
             stats.TotalRequests++;
             stats.AverageResponseTime = ((stats.AverageResponseTime * (stats.TotalRequests - 1)) + responseTime) / stats.TotalRequests;
 
-            
+            Console.WriteLine($"Recorded stats for {apiName}: TotalRequests = {stats.TotalRequests}, AverageResponseTime = {stats.AverageResponseTime} ms");
+
+
             if (responseTime < 100)
             {
                 stats.FastRequests++;
@@ -35,11 +39,14 @@ namespace ApiAggregatorService.Services
             {
                 stats.SlowRequests++;
             }
+
+            Console.WriteLine($"Stats recorded for {apiName}: {stats.TotalRequests} requests, Average Response Time: {stats.AverageResponseTime}ms");
         }
 
         public ApiStats? GetApiStats(string apiName)
         {
             _apiStats.TryGetValue(apiName, out var stats);
+            Console.WriteLine($"Getting stats for {apiName}: {stats?.TotalRequests ?? 0} requests");
             return stats;
         }
     }

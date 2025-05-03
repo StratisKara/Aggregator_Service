@@ -19,6 +19,7 @@ builder.Services.AddHttpClient<INewsService, NewsService>(client =>
 });
 builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddMemoryCache();
 
 // Add controllers
 builder.Services.AddControllers();

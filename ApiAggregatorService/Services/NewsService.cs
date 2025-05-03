@@ -1,37 +1,45 @@
 ﻿using ApiAggregatorService.Models;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiAggregatorService.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
+using System;
+using ApiAggregatorService.Interfaces.ApiAggregatorService.Interfaces;
 
 namespace ApiAggregatorService.Services
-{ 
+{
     public class NewsService : INewsService
     {
         private readonly HttpClient _httpClient;
+        private readonly IMemoryCache _cache;
+        private readonly IStatisticsService _statisticsService; 
 
-        public NewsService(HttpClient httpClient)
+        public NewsService(HttpClient httpClient, IMemoryCache cache, IStatisticsService statisticsService)
         {
             _httpClient = httpClient;
-
-            //if (!_httpClient.DefaultRequestHeaders.UserAgent.Any())
-            //{
-            //    _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("ApiAggregatorApp/1.0");
-            //}
+            _cache = cache;
+            _statisticsService = statisticsService; 
         }
 
         public async Task<List<NewsArticle>> GetNewsArticlesAsync(string keyword)
         {
+            string cacheKey = $"news_{keyword}";
+
+            if (_cache.TryGetValue(cacheKey, out List<NewsArticle> cachedArticles))
+            {
+                _statisticsService.RecordApiStats("News", 0); 
+                return cachedArticles;
+            }
 
             string apiKey = "6cd59038ee0345278136786b97c36ff1";
             string url = $"https://newsapi.org/v2/everything?q={keyword}&apiKey={apiKey}";
 
-            //var request = new HttpRequestMessage(HttpMethod.Get, url);
-            //request.Headers.UserAgent.ParseAdd("ApiAggregatorApp/1.0");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew(); 
 
             var response = await _httpClient.GetAsync(url);
 
+            stopwatch.Stop();
 
             if (!response.IsSuccessStatusCode)
             {
@@ -40,7 +48,6 @@ namespace ApiAggregatorService.Services
             }
 
             response.EnsureSuccessStatusCode();
-
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
@@ -58,8 +65,11 @@ namespace ApiAggregatorService.Services
                 });
             }
 
-            return result;
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
 
+            _statisticsService.RecordApiStats("News", stopwatch.ElapsedMilliseconds); 
+
+            return result;
         }
     }
 }
