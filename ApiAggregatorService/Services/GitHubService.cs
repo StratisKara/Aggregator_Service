@@ -37,39 +37,50 @@ namespace ApiAggregatorService.Services
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew(); 
 
-            var response = await _httpClient.GetAsync(url);
+            List<GitHubRepo> repos = null;
 
-            stopwatch.Stop(); 
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"GitHub API failed: {response.StatusCode} - {errorContent}");
-            }
 
-            response.EnsureSuccessStatusCode();
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-            var repos = doc.RootElement.GetProperty("items");
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var itemsArray = doc.RootElement.GetProperty("items").EnumerateArray();
 
-            var result = new List<GitHubRepo>();
+                var result = new List<GitHubRepo>();
 
-            foreach (var repo in repos.EnumerateArray())
-            {
-                result.Add(new GitHubRepo
+                repos = itemsArray.Select(item => new GitHubRepo
                 {
-                    Name = repo.GetProperty("name").GetString(),
-                    Owner = repo.GetProperty("owner").GetProperty("login").GetString(),
-                    Stars = repo.GetProperty("stargazers_count").GetInt32()
-                });
+                    Name = item.GetProperty("name").GetString(),
+                    Stars = item.GetProperty("stargazers_count").GetInt32(),
+                    Owner = item.GetProperty("owner").GetString()
+                }).ToList();
+
+                _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"GitHub API call failed: {ex.Message}");
+
+                if (cachedRepos != null)
+                {
+                    repos = cachedRepos;
+                }
+                else
+                {
+                    repos = new List<GitHubRepo>
+                    {
+                        new GitHubRepo { Name = "Fallback Repo", Owner = "Fallback Owner", Stars = 0 }
+                    };
+                }
             }
 
-            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
-
+            stopwatch.Stop();
             _statisticsService.RecordApiStats("GitHub", stopwatch.ElapsedMilliseconds); 
 
-            return result;
+            return repos;
         }
     }
 }

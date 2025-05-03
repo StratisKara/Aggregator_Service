@@ -37,39 +37,49 @@ namespace ApiAggregatorService.Services
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew(); 
 
-            var response = await _httpClient.GetAsync(url);
+            List<NewsArticle> articles = null;
 
-            stopwatch.Stop();
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"News API failed: {response.StatusCode} - {errorContent}");
-            }
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
 
-            response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-            var articles = doc.RootElement.GetProperty("articles");
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var articlesArray = doc.RootElement.GetProperty("articles").EnumerateArray();
 
-            var result = new List<NewsArticle>();
-
-            foreach (var article in articles.EnumerateArray())
-            {
-                result.Add(new NewsArticle
+                articles = articlesArray.Select(article => new NewsArticle
                 {
                     Title = article.GetProperty("title").GetString(),
-                    Source = article.GetProperty("source").GetProperty("name").GetString(),
+                    Source = article.GetProperty("source").GetString(),
                     PublishedAt = article.GetProperty("publishedAt").GetDateTime()
-                });
+                }).ToList();
+
+
+                _cache.Set(cacheKey, articles, TimeSpan.FromMinutes(10));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"News API call failed: {ex.Message}");
+
+                if (cachedArticles != null)
+                {
+                    articles = cachedArticles;
+                }
+                else
+                {
+                    articles = new List<NewsArticle>
+                    {
+                        new NewsArticle { Title = "Fallback Article", PublishedAt = DateTime.Now, Source = "Article Fallbacked" }
+                    };
+                }
             }
 
-            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
-
+            stopwatch.Stop();
             _statisticsService.RecordApiStats("News", stopwatch.ElapsedMilliseconds); 
 
-            return result;
+            return articles;
         }
     }
 }

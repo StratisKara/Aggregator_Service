@@ -125,9 +125,19 @@ namespace ApiAggregatorService.Controllers
             {
                 return await apiCall();
             }
-            catch(Exception ex)
+            catch(TimeoutException ex)
             {
-                Console.WriteLine($"API call failed with message: {ex.Message}");
+                Console.WriteLine($"API call timed out: {ex.Message}");
+                return default;
+            }
+            catch(HttpRequestException ex)
+            {
+                Console.WriteLine($"Network error during API call: {ex.Message}");
+                return default;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"API failed with error: {ex.Message} - {ex.InnerException?.Message}");
                 return default;
             }
         }
