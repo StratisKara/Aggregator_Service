@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System;
 using ApiAggregatorService.Interfaces;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
+using ApiAggregatorService.Interfaces.ApiAggregatorService.Interfaces;
 
 namespace ApiAggregatorService.Tests
 {
@@ -21,6 +22,7 @@ namespace ApiAggregatorService.Tests
             var mockWeather = new Mock<IWeatherService>();
             var mockNews = new Mock<INewsService>();
             var mockGitHub = new Mock<IGitHubService>();
+            var mockStatistics = new Mock<IStatisticsService>();
 
             mockWeather.Setup(w => w.GetWeatherInfoAsync(It.IsAny<string>()))
                 .ReturnsAsync(new WeatherInfo
@@ -42,7 +44,7 @@ namespace ApiAggregatorService.Tests
                 });
 
 
-            var controller = new AggregationController(mockWeather.Object, mockNews.Object, mockGitHub.Object);
+            var controller = new AggregationController(mockWeather.Object, mockNews.Object, mockGitHub.Object, mockStatistics.Object);
 
             var result = await controller.GetAggregatedData();
 
