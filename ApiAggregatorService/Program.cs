@@ -2,6 +2,7 @@
 using Microsoft.OpenApi.Models;
 using ApiAggregatorService.Interfaces;
 using ApiAggregatorService.Models;
+using ApiAggregatorService.Interfaces.ApiAggregatorService.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddHttpClient<INewsService, NewsService>(client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("MyApiAggregatorApp/1.0");
 });
 builder.Services.AddScoped<IGitHubService, GitHubService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 // Add controllers
 builder.Services.AddControllers();

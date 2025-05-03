@@ -1,42 +1,46 @@
-﻿using ApiAggregatorService.Interfaces;
+﻿using ApiAggregatorService.Models;
+using ApiAggregatorService.Interfaces;
 using System.Collections.Concurrent;
-using ApiAggregatorService.Models;
+using ApiAggregatorService.Interfaces.ApiAggregatorService.Interfaces;
 
 namespace ApiAggregatorService.Services
 {
     public class StatisticsService : IStatisticsService
     {
+        
+        private readonly ConcurrentDictionary<string, ApiStats> _apiStats;
 
-        private readonly ConcurrentDictionary<string, ApiStatistics> _apiStats = new();
-
-        public void LogRequest(string apiName, long responseTime)
+        public StatisticsService()
         {
+            _apiStats = new ConcurrentDictionary<string, ApiStats>();
+        }
 
-            var apiStats = _apiStats.GetOrAdd(apiName, new ApiStatistics());
+        public void RecordApiStats(string apiName, long responseTime)
+        {
+            var stats = _apiStats.GetOrAdd(apiName, new ApiStats());
 
-            lock (apiStats)
+            stats.TotalRequests++;
+            stats.AverageResponseTime = ((stats.AverageResponseTime * (stats.TotalRequests - 1)) + responseTime) / stats.TotalRequests;
+
+            
+            if (responseTime < 100)
             {
-                apiStats.TotalRequests++;
-                apiStats.TotalResponseTime += responseTime;
-
-                if (responseTime < 100)
-                {
-                    apiStats.FastCount++;
-                }
-                else if (responseTime <= 200)
-                {
-                    apiStats.AverageCount++;
-                }
-                else
-                {
-                    apiStats.SlowCount++;
-                }
+                stats.FastRequests++;
+            }
+            else if (responseTime >= 100 && responseTime <= 200)
+            {
+                stats.AverageRequests++;
+            }
+            else
+            {
+                stats.SlowRequests++;
             }
         }
 
-        public Dictionary<string, ApiStatistics> GetStatistics()
+        public ApiStats? GetApiStats(string apiName)
         {
-            return _apiStats.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            _apiStats.TryGetValue(apiName, out var stats);
+            return stats;
         }
     }
 }

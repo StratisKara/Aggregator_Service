@@ -2,9 +2,13 @@
 
 namespace ApiAggregatorService.Interfaces
 {
-    public interface IStatisticsService
+    namespace ApiAggregatorService.Interfaces
     {
-        void LogRequest(string apiName, long responseTime);
-        Dictionary<string, ApiStatistics> GetStatistics();
+        public interface IStatisticsService
+        {
+            void RecordApiStats(string apiName, long responseTime);  
+            ApiStats GetApiStats(string apiName);  
+        }
     }
+
 }
